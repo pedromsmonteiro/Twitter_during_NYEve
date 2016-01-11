@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+/* File taken from http://bost.ocks.org/mike/map/ */
+/* colours of the countries*/
+.subunit.SCT { fill: #ddc; }
+.subunit.WLS { fill: #cdd; }
+.subunit.NIR { fill: #cdc; }
+.subunit.ENG { fill: #dcd; }
+.subunit.IRL { display: none; }
+/* Language */
+.subunit.en { fill: #ddc; }
+.subunit.pt { fill: #cdd; }
+.subunit.fr { fill: #cdc; }
+.subunit.es { fill: #dcd; }
+
+
+
+/* boarder lines*/
+.subunit-boundary {
+  fill: none;
+  stroke: #777;
+  stroke-dasharray: 2,2;
+  stroke-linejoin: round;
+}
+.subunit-boundary.IRL {
+  stroke: #aaa;
+}
+/* Colour of countries label*/
+.subunit-label {
+  fill: #777;
+  fill-opacity: .5;
+  font-size: 20px;
+  font-weight: 300;
+  text-anchor: middle;
+}
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script>
+
+/* JavaScript goes here. */
+
+
+
+var width = 960,
+    height = 1160;
+
+var projection = d3.geo.albers()
+    .center([0, 55.4])
+    .rotate([4.4, 0])
+    .parallels([50, 60])
+    .scale(1200 * 5)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+
+
+
+
+
+
+
+d3.json("uk.json", function(error, uk) {
+  svg.selectAll(".subunit")
+      .data(topojson.feature(uk, uk.objects.subunits).features)
+    .enter().append("path")
+      .attr("class", function(d) { return "subunit " + d.id; })
+      .attr("d", path);
+     /* England-Scotland and England-Wales borders*/
+      svg.append("path")
+    .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
+    .attr("d", path)
+    .attr("class", "subunit-boundary");
+/*  Irish coastline, and boarder*/
+    svg.append("path")
+    .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
+    .attr("d", path)
+    .attr("class", "subunit-boundary IRL");
+
+ /* City points*/
+    svg.append("path")
+    .datum(topojson.feature(uk, uk.objects.places))
+    .attr("d", path)
+    .attr("class", "place");
+
+
+ /* Name of the cities*/
+ svg.selectAll(".place-label")
+    .data(topojson.feature(uk, uk.objects.places).features)
+  .enter().append("text")
+    .attr("class", "place-label")
+    .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+
+ /* Aligning labels*/
+
+ svg.selectAll(".place-label")
+    .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+    .style("font-size","12px")
+    .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; });
+
+
+ /* Labeling countries */
+
+ svg.selectAll(".subunit-label")
+    .data(topojson.feature(uk, uk.objects.subunits).features)
+  .enter().append("text")
+    .attr("class", function(d) { return "subunit-label " + d.id; })
+    .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
+    .attr("dy", ".35em")
+    .text(function(d) { return d.properties.name; });
+})
+d3.json("geoData.json", function(error, geoData) {
+
+
+var color = d3.scale.category10();
+
+var tooltip = d3.select("body")
+    .data(geoData.features) // selects features to bind to the elements classed as points
+    .enter()
+	.append("div")
+	.style("position", "absolute")
+	.style("font-size","12px")
+	.style("visibility", "hidden")
+	.text(function(d){ return d.properties.tweet_body});
+
+var al = svg.selectAll(".points")
+
+    .data(geoData.features) // selects features to bind to the elements classed as points
+    .enter() // binds the correct number of elements
+    .append("circle") // adds data bound circle elements to the graph
+    .classed("points",true) //  classes the circle elements
+    .style("fill", function(d){ return color(d.properties.tweet_body)})  // colour
+    .style("opacity", .8) //opacity
+    .attr("cx",0)
+    .attr("cy",0)
+    .attr("transform", function(d){ return "translate("+path.centroid(d)+")"})// uses the path function to translate the long,lat into screen coords
+    .attr("r",3) // sets the radius
+    /* create labels for languages not working */
+    .on("mouseover", function(){return tooltip.style("visibility", "visible");})
+	.on("mousemove", function(){return tooltip.style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");})
+	.on("mouseout", function(){return tooltip.style("visibility", "hidden");});
+
+
+
+
+
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>

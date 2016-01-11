@@ -1,0 +1,95 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1404\cocoasubrtf340
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red255\green0\blue0;\red38\green38\blue38;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww20000\viewh13020\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs32 \cf0 Using the twitter API during New Years Eve to study tweet location, language and sentiment analysis.\
+\
+\'97\'97\'97\'97\'97\'97\
+Saving geographical positions and language of tweets using jq (https://stedolan.github.io/jq/) to parse the data:\
+\
+echo '\{"type":"FeatureCollection","features":'"$(cat input.json | jq 'select(.geo)| \{type: "Feature", geometry:\{type:"Point", coordinates:[.geo.coordinates[1],.geo.coordinates[0]]\},properties:\{tweet_lang:.lang,handle:.actor.displayName\}\}' | jq -s .)"'\}' > output.json\
+\
+input.json is the file we want to parse and output.json is the parsed output file.\
+\
+In this case we have stored the coordinates and the language for each tweet. The result is a GeoJSON type of file.\
+\
+Create the world maps files by transforming a shape file into a GeoJSON file using ogr2ogr package inside GDAL. Afterwards, we combine the needed files to create the final topoJSON. The shape files can be downloaded in: \
+\
+\cf2 land:\cf0  http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/physical/ne_110m_land.zip\
+\cf2 country:\cf0  http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/110m/cultural/ne_110m_admin_0_countries.zip\
+\cf2 map_subunits: \cf0 http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_map_subunits.zip\
+\cf2 populated_places:\cf0  http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_populated_places.zip\
+\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\cf2 ## Folder twitter_World_US - creating a world map\cf0 \
+\
+#cd ne_110m_land/\
+ogr2ogr -f GeoJSON land.json ne_110m_land.shp \
+\
+#cd ne_110m_admin_0_countries/\
+ogr2ogr -f GeoJSON countries.json ne_110m_admin_0_countries.shp  \
+\
+# In twitter_World_US folder\
+topojson -o world.json  -- ne_110m_land/land.json ne_110m_admin_0_countries/countries.json\
+\
+\pard\pardeftab720\partightenfactor0
+\cf2 \expnd0\expndtw0\kerning0
+## in the folder twitter_UK\kerning1\expnd0\expndtw0  - creating the UK map\cf0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \
+# cd ne_110m_populated_places/\
+\pard\pardeftab720\partightenfactor0
+\cf0 \expnd0\expndtw0\kerning0
+ogr2ogr \\\
+  -f GeoJSON \\\
+  -where "ADM0_A3 IN ('GBR', 'IRL')" \\\
+  subunits.json \\\
+  ne_10m_admin_0_map_subunits.shp\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \kerning1\expnd0\expndtw0 # cd \expnd0\expndtw0\kerning0
+ne_10m_populated_places/\
+\pard\pardeftab720\partightenfactor0
+\cf0 ogr2ogr \\\
+  -f GeoJSON \\\
+  -where "ISO_A2 = 'GB' AND SCALERANK < 8" \\\
+  places.json \\\
+  ne_10m_populated_places.shp\
+\pard\pardeftab720\partightenfactor0
+\cf0 \kerning1\expnd0\expndtw0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 # In twitter_UK folder\
+\pard\pardeftab720\partightenfactor0
+
+\f1 \cf3 \expnd0\expndtw0\kerning0
+topojson \\\
+  -o uk.json \\\
+  --id-property SU_A3 \\\
+  --properties name=NAME \\\
+  -- \\\
+  subunits.json \\\
+  places.json
+\f0 \cf0 \kerning1\expnd0\expndtw0 \
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 \'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\'97\
+\
+The resulting maps are going to apear in the browser (running in folder): \
+- Initiate python http server: python -m SimpleHTTPServer 8080 \
+- run index.html: http://localhost:8080/index.html\
+\
+\
+\cf2 TO DO:\cf0 \
+- Add country borders\
+- Add different colours\
+- Add different colours to twitter languages\
+- Add sentiment analysis\
+\
+\
+\
+References: \
+http://support.gnip.com/articles/visualizing-twitter-geo-data.html\
+http://bost.ocks.org/mike/map/\
+\
+\
+}

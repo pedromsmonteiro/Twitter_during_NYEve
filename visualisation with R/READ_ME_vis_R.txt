@@ -1,4 +1,6 @@
-These files run steps within the sentiment analysis framework. We only use standard packages, even though there are nowadays many specialised packages. The complete list of python script files, which accept json files and return their running time, are as follows:
+These files run steps within the sentiment analysis framework. 
+We only use standard packages, even though there are nowadays many specialised packages. 
+The complete list of python script files, which accept json files and return their running time, are as follows:
 
 * statesUS.R —plots all languages in tweets sent from US states
 * world_tweets.R — produces a world map with all tweets sent over NYE (given their coordinates: lat and long)
@@ -7,7 +9,8 @@ These files run steps within the sentiment analysis framework. We only use stand
 * worldclouds.R — pictures world clouds with the words from tweets carrying sentiments by their frequency.
 
 
-We have interfaced with the twitter API for an approximate period of 13 hours, starting at approximately 10pm UK time of 31st December 2015. 
+We have interfaced with the twitter API for an approximate period of 13 hours: 
+starting at approximately 10pm UK time of 31st December 2015. 
 
 
 
